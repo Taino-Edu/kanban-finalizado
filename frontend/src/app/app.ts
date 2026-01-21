@@ -1,9 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // <--- IMPORTANTE
 import { CommonModule } from '@angular/common';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { Apollo, gql } from 'apollo-angular';
 import { FormsModule } from '@angular/forms';
 
+/* =======================================
+   CONSULTAS E COMANDOS
+   ======================================= */
 const GET_TAKS = gql`
   query {
     tasks {
@@ -42,44 +45,55 @@ const DELETE_TASK = gql`
   styleUrls: ['./app.css'],
 })
 export class AppComponent implements OnInit {
+  // Listas
   todo: any[] = [];
   doing: any[] = [];
   done: any[] = [];
 
-  // --- NOVAS VARIÁVEIS DO DASHBOARD ---
+  // Dashboard
   totalTasks = 0;
-  progress = 0; // % de conclusão
+  progress = 0;
   atrasadas = 0;
-  // ------------------------------------
 
+  // Controle
   colunasIds: any = {}; 
   selecionado: any = null;
 
+  // Formulário
   novoTitulo = '';
   novaDescricao = '';
   novoPrazo = '';
 
-  constructor(private apollo: Apollo) {}
+  constructor(
+    private apollo: Apollo,
+    private cdr: ChangeDetectorRef // <--- INJEÇÃO DA CURA PARA O BUG
+  ) {}
 
   ngOnInit() {
     this.carregarDados();
+    // Define a data de hoje no input
     const hoje = new Date().toISOString().split('T')[0];
     this.novoPrazo = hoje;
   }
 
   carregarDados() {
     this.apollo
-      .watchQuery({ query: GET_TAKS, fetchPolicy: 'network-only' })
+      .watchQuery({ 
+        query: GET_TAKS, 
+        fetchPolicy: 'network-only' // Garante que sempre busca dados frescos
+      })
       .valueChanges.subscribe((result: any) => {
         const tasksRaw = result.data?.tasks || [];
         const boards = result.data?.boards || [];
 
+        // Mapeia colunas
         if (boards.length > 0 && boards[0].columns) {
             boards[0].columns.forEach((col: any) => {
                 this.colunasIds[col.name] = col.id;
             });
         }
 
+        // Formata Tarefas
         const allTasks = tasksRaw.map((t: any) => ({
           id: t.id,
           title: t.title,
@@ -89,30 +103,33 @@ export class AppComponent implements OnInit {
           columnName: t.column?.name
         }));
 
-        this.todo = allTasks.filter((t: any) => t.columnName === 'A Fazer' || t.columnName === 'TODO');
-        this.doing = allTasks.filter((t: any) => t.columnName === 'Em Progresso' || t.columnName === 'DOING');
-        this.done = allTasks.filter((t: any) => t.columnName === 'Feito' || t.columnName === 'DONE');
+        // Separa nas listas (aceitando nomes em PT ou EN)
+        this.todo = allTasks.filter((t: any) => ['A Fazer', 'TODO'].includes(t.columnName));
+        this.doing = allTasks.filter((t: any) => ['Em Progresso', 'DOING'].includes(t.columnName));
+        this.done = allTasks.filter((t: any) => ['Feito', 'DONE'].includes(t.columnName));
 
-        // CALCULA O DASHBOARD SEMPRE QUE OS DADOS CHEGAM
+        // Atualiza Dashboard e FORÇA A TELA A PINTAR
         this.atualizarEstatisticas();
+        this.cdr.detectChanges(); // <--- O SEGREDO MÁGICO AQUI
       });
   }
 
   atualizarEstatisticas() {
+    // 1. Total
     this.totalTasks = this.todo.length + this.doing.length + this.done.length;
     
-    // Cálculo de Progresso (Tarefas Feitas / Total)
+    // 2. Progresso (Evita divisão por zero)
     if (this.totalTasks > 0) {
       this.progress = Math.round((this.done.length / this.totalTasks) * 100);
     } else {
       this.progress = 0;
     }
 
-    // Cálculo de Atrasadas
+    // 3. Atrasadas (Ignora as que já estão "Feito")
     const hoje = new Date().toISOString().split('T')[0];
-    const todas = [...this.todo, ...this.doing]; // Só conta atraso se não estiver "Feito"
+    const pendentes = [...this.todo, ...this.doing];
     
-    this.atrasadas = todas.filter(t => t.dueDate && t.dueDate < hoje).length;
+    this.atrasadas = pendentes.filter(t => t.dueDate && t.dueDate < hoje).length;
   }
 
   adicionar() {
@@ -120,6 +137,7 @@ export class AppComponent implements OnInit {
 
     let idColuna = this.colunasIds['A Fazer'] || this.colunasIds['TODO'];
     
+    // Fallback: se não achar pelo nome, pega o primeiro ID disponível
     if (!idColuna && Object.values(this.colunasIds).length > 0) {
         idColuna = Object.values(this.colunasIds)[0];
     }
@@ -135,7 +153,7 @@ export class AppComponent implements OnInit {
     this.apollo.mutate({
         mutation: CREATE_TASK,
         variables: { input },
-        refetchQueries: [{ query: GET_TAKS }],
+        refetchQueries: [{ query: GET_TAKS }], // Recarrega tudo após adicionar
       }).subscribe(() => {
         this.novoTitulo = '';
         this.novaDescricao = '';
@@ -170,7 +188,7 @@ export class AppComponent implements OnInit {
       event.currentIndex
     );
     
-    // Recalcula o progresso visualmente na hora (pra ficar rápido)
+    // Atualiza visualmente na hora
     this.atualizarEstatisticas();
 
     const task = event.container.data[event.currentIndex];
