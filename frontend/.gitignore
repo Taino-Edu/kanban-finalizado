@@ -42,3 +42,17 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Ignorar dependências pesadas
+node_modules/
+dist/
+.angular/
+
+# Ignorar arquivos de sistema e IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Ignorar banco de dados local (opcional, mas recomendado)
+*.sqlite
+*.db

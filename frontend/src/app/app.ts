@@ -2,105 +2,195 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { Apollo, gql } from 'apollo-angular';
+import { FormsModule } from '@angular/forms';
 
-// Query para buscar dados
-const GET_CANDIDATOS = gql`
+const GET_TAKS = gql`
   query {
-    candidatos { id, nome, email, coluna }
+    tasks {
+      id, title, description, dueDate, order
+      column { id name }
+    }
+    boards {
+      id, columns { id name }
+    }
   }
 `;
 
-// Mutation para mover
-const MOVER_CANDIDATO = gql`
-  mutation($id: String!, $novaColuna: String!) {
-    moverCandidato(id: $id, novaColuna: $novaColuna) { id }
+const CREATE_TASK = gql`
+  mutation($input: CreateTaskInput!) {
+    createTask(input: $input) { id title }
   }
 `;
 
-// NOVO: Mutation para criar
-const CRIAR_CANDIDATO = gql`
-  mutation($nome: String!, $email: String!) {
-    criarCandidato(nome: $nome, email: $email) { id }
+const MOVE_TASK = gql`
+  mutation($input: MoveTaskInput!) {
+    moveTask(input: $input) { id }
   }
 `;
 
-// NOVO: Mutation para deletar
-const REMOVER_CANDIDATO = gql`
+const DELETE_TASK = gql`
   mutation($id: String!) {
-    removerCandidato(id: $id)
+    deleteTask(id: $id)
   }
 `;
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, DragDropModule],
+  imports: [CommonModule, DragDropModule, FormsModule],
   templateUrl: './app.html',
-  styleUrls: ['./app.css']
+  styleUrls: ['./app.css'],
 })
 export class AppComponent implements OnInit {
   todo: any[] = [];
   doing: any[] = [];
   done: any[] = [];
 
+  // --- NOVAS VARIÁVEIS DO DASHBOARD ---
+  totalTasks = 0;
+  progress = 0; // % de conclusão
+  atrasadas = 0;
+  // ------------------------------------
+
+  colunasIds: any = {}; 
+  selecionado: any = null;
+
+  novoTitulo = '';
+  novaDescricao = '';
+  novoPrazo = '';
+
   constructor(private apollo: Apollo) {}
 
   ngOnInit() {
     this.carregarDados();
+    const hoje = new Date().toISOString().split('T')[0];
+    this.novoPrazo = hoje;
   }
 
   carregarDados() {
-    this.apollo.watchQuery({ query: GET_CANDIDATOS }).valueChanges.subscribe((result: any) => {
-      // Limpa os arrays antes de encher de novo para evitar duplicatas visuais
-      const todos = result.data?.candidatos || [];
-      this.todo = todos.filter((c: any) => c.coluna === 'TODO');
-      this.doing = todos.filter((c: any) => c.coluna === 'DOING');
-      this.done = todos.filter((c: any) => c.coluna === 'DONE');
-    });
+    this.apollo
+      .watchQuery({ query: GET_TAKS, fetchPolicy: 'network-only' })
+      .valueChanges.subscribe((result: any) => {
+        const tasksRaw = result.data?.tasks || [];
+        const boards = result.data?.boards || [];
+
+        if (boards.length > 0 && boards[0].columns) {
+            boards[0].columns.forEach((col: any) => {
+                this.colunasIds[col.name] = col.id;
+            });
+        }
+
+        const allTasks = tasksRaw.map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          description: t.description,
+          dueDate: t.dueDate,
+          columnId: t.column?.id,
+          columnName: t.column?.name
+        }));
+
+        this.todo = allTasks.filter((t: any) => t.columnName === 'A Fazer' || t.columnName === 'TODO');
+        this.doing = allTasks.filter((t: any) => t.columnName === 'Em Progresso' || t.columnName === 'DOING');
+        this.done = allTasks.filter((t: any) => t.columnName === 'Feito' || t.columnName === 'DONE');
+
+        // CALCULA O DASHBOARD SEMPRE QUE OS DADOS CHEGAM
+        this.atualizarEstatisticas();
+      });
   }
 
-  // Função chamada pelo botão Adicionar
-  adicionar(nomeInput: HTMLInputElement, emailInput: HTMLInputElement) {
-    if (!nomeInput.value) return;
+  atualizarEstatisticas() {
+    this.totalTasks = this.todo.length + this.doing.length + this.done.length;
+    
+    // Cálculo de Progresso (Tarefas Feitas / Total)
+    if (this.totalTasks > 0) {
+      this.progress = Math.round((this.done.length / this.totalTasks) * 100);
+    } else {
+      this.progress = 0;
+    }
+
+    // Cálculo de Atrasadas
+    const hoje = new Date().toISOString().split('T')[0];
+    const todas = [...this.todo, ...this.doing]; // Só conta atraso se não estiver "Feito"
+    
+    this.atrasadas = todas.filter(t => t.dueDate && t.dueDate < hoje).length;
+  }
+
+  adicionar() {
+    if (!this.novoTitulo.trim()) return;
+
+    let idColuna = this.colunasIds['A Fazer'] || this.colunasIds['TODO'];
+    
+    if (!idColuna && Object.values(this.colunasIds).length > 0) {
+        idColuna = Object.values(this.colunasIds)[0];
+    }
+
+    const input = {
+      title: this.novoTitulo,
+      description: this.novaDescricao,
+      dueDate: this.novoPrazo || null,
+      order: 0,
+      columnId: idColuna
+    };
 
     this.apollo.mutate({
-      mutation: CRIAR_CANDIDATO,
-      variables: { nome: nomeInput.value, email: emailInput.value },
-      refetchQueries: [{ query: GET_CANDIDATOS }] // Atualiza a lista automaticamente
-    }).subscribe(() => {
-      // Limpa os campos
-      nomeInput.value = '';
-      emailInput.value = '';
-    });
+        mutation: CREATE_TASK,
+        variables: { input },
+        refetchQueries: [{ query: GET_TAKS }],
+      }).subscribe(() => {
+        this.novoTitulo = '';
+        this.novaDescricao = '';
+        this.novoPrazo = new Date().toISOString().split('T')[0];
+      });
   }
 
-  // Função chamada pelo botão Excluir (X)
   remover(id: string) {
-    if(confirm('Tem certeza que quer excluir?')) {
-      this.apollo.mutate({
-        mutation: REMOVER_CANDIDATO,
-        variables: { id: id },
-        refetchQueries: [{ query: GET_CANDIDATOS }]
-      }).subscribe();
+    if (confirm('Tem certeza?')) {
+        this.apollo.mutate({
+            mutation: DELETE_TASK,
+            variables: { id },
+            refetchQueries: [{ query: GET_TAKS }]
+        }).subscribe();
+        
+        if (this.selecionado && this.selecionado.id === id) {
+            this.selecionado = null;
+        }
     }
   }
 
   drop(event: CdkDragDrop<any[]>) {
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-    } else {
-      transferArrayItem(
-        event.previousContainer.data,
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex,
-      );
-      const candidato = event.container.data[event.currentIndex];
-      const novaColuna = event.container.id; 
-      this.apollo.mutate({
-        mutation: MOVER_CANDIDATO,
-        variables: { id: candidato.id, novaColuna: novaColuna }
-      }).subscribe();
+      return;
+    }
+
+    transferArrayItem(
+      event.previousContainer.data,
+      event.container.data,
+      event.previousIndex,
+      event.currentIndex
+    );
+    
+    // Recalcula o progresso visualmente na hora (pra ficar rápido)
+    this.atualizarEstatisticas();
+
+    const task = event.container.data[event.currentIndex];
+    const nomeNovaColuna = event.container.id; 
+    const idNovaColuna = this.colunasIds[nomeNovaColuna];
+
+    if (idNovaColuna) {
+        this.apollo.mutate({
+            mutation: MOVE_TASK,
+            variables: {
+                input: {
+                    taskId: task.id,
+                    toColumnId: idNovaColuna,
+                    newOrder: event.currentIndex
+                }
+            }
+        }).subscribe();
     }
   }
+
+  abrirDetalhes(task: any) { this.selecionado = task; }
+  fecharDetalhes() { this.selecionado = null; }
 }

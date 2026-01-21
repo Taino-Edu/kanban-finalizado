@@ -1,63 +1,161 @@
 <div class="container-geral">
-  
-  <div class="barra-adicionar">
-    <input #nome placeholder="Nome do Candidato" type="text">
-    <input #email placeholder="E-mail" type="text">
-    <button (click)="adicionar(nome, email)">+ Adicionar Card</button>
+
+  <div class="dashboard">
+    
+    <div class="dash-card">
+      <div class="dash-icon">🚀</div>
+      <div class="dash-info">
+        <span>Progresso</span>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" [style.width.%]="progress"></div>
+        </div>
+        <small>{{ progress }}% Concluído</small>
+      </div>
+    </div>
+
+    <div class="dash-card">
+      <div class="dash-icon">📊</div>
+      <div class="dash-info">
+        <span>Total de Tarefas</span>
+        <h3>{{ totalTasks }}</h3>
+      </div>
+    </div>
+
+    <div class="dash-card alert" *ngIf="atrasadas > 0">
+      <div class="dash-icon">🔥</div>
+      <div class="dash-info">
+        <span>Atenção</span>
+        <h3>{{ atrasadas }} Atrasadas</h3>
+      </div>
+    </div>
+
   </div>
 
-  <div class="kanban-board">
+  <div class="barra-adicionar">
+    <input [(ngModel)]="novoTitulo" placeholder="Nova Tarefa..." type="text" (keydown.enter)="adicionar()">
     
-    <div class="coluna">
-      <h2 style="border-top: 4px solid #ff5252;">A Fazer</h2>
-      <div
-        cdkDropList id="TODO" [cdkDropListData]="todo"
-        [cdkDropListConnectedTo]="['DOING', 'DONE']"
-        class="lista" (cdkDropListDropped)="drop($event)">
-        
-        <div class="card" *ngFor="let item of todo" cdkDrag>
-          <div class="card-content">
-            <b>{{ item.nome }}</b> <small>{{ item.email }}</small>
-          </div>
-          <button class="btn-delete" (click)="remover(item.id)">X</button>
-        </div>
+    <input [(ngModel)]="novaDescricao" placeholder="Notas (Opcional)" type="text">
+    
+    <input [(ngModel)]="novoPrazo" type="date" title="Prazo de Entrega">
 
+    <button (click)="adicionar()">+ Adicionar</button>
+  </div>
+
+  <div class="kanban-area">
+    <div class="kanban-board">
+
+      <div class="coluna todo">
+        <h2>
+          A Fazer
+          <span class="count">{{ todo.length }}</span>
+        </h2>
+
+        <div
+          cdkDropList
+          id="A Fazer"
+          [cdkDropListData]="todo"
+          [cdkDropListConnectedTo]="['Em Progresso', 'Feito']"
+          class="lista"
+          (cdkDropListDropped)="drop($event)"
+        >
+          <div class="card" *ngFor="let item of todo" cdkDrag (click)="abrirDetalhes(item)">
+            <button class="btn-delete" (click)="remover(item.id); $event.stopPropagation()">🗑️</button>
+            
+            <div class="card-content">
+              <b>{{ item.title }}</b>
+              <div class="card-footer">
+                <span *ngIf="item.description" title="Tem notas">📝</span>
+                <small *ngIf="item.dueDate" [style.color]="'red'">
+                  📅 {{ item.dueDate | date:'dd/MM' }}
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <div class="coluna doing">
+        <h2>
+          Em Progresso
+          <span class="count">{{ doing.length }}</span>
+        </h2>
+
+        <div
+          cdkDropList
+          id="Em Progresso"
+          [cdkDropListData]="doing"
+          [cdkDropListConnectedTo]="['A Fazer', 'Feito']"
+          class="lista"
+          (cdkDropListDropped)="drop($event)"
+        >
+          <div class="card" *ngFor="let item of doing" cdkDrag (click)="abrirDetalhes(item)">
+            <button class="btn-delete" (click)="remover(item.id); $event.stopPropagation()">🗑️</button>
+
+            <div class="card-content">
+              <b>{{ item.title }}</b>
+              <div class="card-footer">
+                <span *ngIf="item.description">📝</span>
+                <small *ngIf="item.dueDate">📅 {{ item.dueDate | date:'dd/MM' }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="coluna done">
+        <h2>
+          Feito
+          <span class="count">{{ done.length }}</span>
+        </h2>
+
+        <div
+          cdkDropList
+          id="Feito"
+          [cdkDropListData]="done"
+          [cdkDropListConnectedTo]="['A Fazer', 'Em Progresso']"
+          class="lista"
+          (cdkDropListDropped)="drop($event)"
+        >
+          <div class="card" *ngFor="let item of done" cdkDrag (click)="abrirDetalhes(item)">
+            <button class="btn-delete" (click)="remover(item.id); $event.stopPropagation()">🗑️</button>
+
+            <div class="card-content">
+              <b style="text-decoration: line-through;">{{ item.title }}</b>
+              <div class="card-footer">
+                 <span *ngIf="item.description">📝</span>
+                 <small *ngIf="item.dueDate">📅 {{ item.dueDate | date:'dd/MM' }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
-    <div class="coluna">
-      <h2 style="border-top: 4px solid #ffb142;">Em Andamento</h2>
-      <div
-        cdkDropList id="DOING" [cdkDropListData]="doing"
-        [cdkDropListConnectedTo]="['TODO', 'DONE']"
-        class="lista" (cdkDropListDropped)="drop($event)">
-        
-        <div class="card" *ngFor="let item of doing" cdkDrag>
-          <div class="card-content">
-            <b>{{ item.nome }}</b>
-          </div>
-          <button class="btn-delete" (click)="remover(item.id)">X</button>
-        </div>
-
+    <aside class="details" *ngIf="selecionado">
+      <div class="details-header">
+        <div class="details-title">Detalhes da Tarefa</div>
+        <button class="details-close" (click)="fecharDetalhes()">✕</button>
       </div>
-    </div>
 
-    <div class="coluna">
-      <h2 style="border-top: 4px solid #2ccce4;">Feito</h2>
-      <div
-        cdkDropList id="DONE" [cdkDropListData]="done"
-        [cdkDropListConnectedTo]="['TODO', 'DOING']"
-        class="lista" (cdkDropListDropped)="drop($event)">
-        
-        <div class="card" *ngFor="let item of done" cdkDrag>
-          <div class="card-content">
-            <b>{{ item.nome }}</b>
-          </div>
-          <button class="btn-delete" (click)="remover(item.id)">X</button>
-        </div>
+      <label class="field">
+        <span>Título</span>
+        <input [value]="selecionado.title" readonly disabled />
+      </label>
 
+      <label class="field">
+        <span>Prazo</span>
+        <input [value]="selecionado.dueDate | date:'dd/MM/yyyy'" readonly disabled />
+      </label>
+
+      <label class="field">
+        <span>Notas</span>
+        <textarea rows="7" readonly disabled>{{ selecionado.description }}</textarea>
+      </label>
+
+      <div class="actions">
+        <button class="secondary" (click)="fecharDetalhes()">Fechar</button>
       </div>
-    </div>
-
+    </aside>
   </div>
 </div>
