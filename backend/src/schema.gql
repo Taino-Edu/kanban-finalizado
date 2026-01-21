@@ -37,12 +37,25 @@ type ColumnTaskCount {
   count: Int!
 }
 
+type User {
+  id: String!
+  name: String!
+  email: String!
+}
+
+type LoginResponse {
+  access_token: String!
+  user: User!
+}
+
 type Query {
   boards: [Board!]!
   columnsByBoard(boardId: ID!): [KanbanColumn!]!
   tasks: [Task!]!
   tasksByColumn(columnId: ID!): [Task!]!
   taskCountsByBoard(boardId: ID!): [ColumnTaskCount!]!
+  users: [User!]!
+  user(id: String!): User
 }
 
 type Mutation {
@@ -50,6 +63,8 @@ type Mutation {
   createColumn(input: CreateColumnInput!): KanbanColumn!
   createTask(input: CreateTaskInput!): Task!
   moveTask(input: MoveTaskInput!): Task!
+  createUser(createUserInput: CreateUserInput!): User!
+  login(loginInput: LoginInput!): LoginResponse!
 }
 
 input CreateBoardInput {
@@ -74,4 +89,15 @@ input MoveTaskInput {
   taskId: ID!
   toColumnId: ID!
   newOrder: Int! = 0
+}
+
+input CreateUserInput {
+  name: String!
+  email: String!
+  password: String!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
 }

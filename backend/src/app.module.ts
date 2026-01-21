@@ -5,6 +5,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
 
 import { KanbanModule } from './kanban/kanban.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +24,10 @@ import { KanbanModule } from './kanban/kanban.module';
     }),
 
     KanbanModule,
+
+    UsersModule,
+
+    AuthModule,
   ],
 })
 export class AppModule {}
