@@ -1,100 +1,47 @@
-# 📋 Kanban Board Fullstack - Desafio Técnico
+# 📋 Kanban Board - Gerenciador de Tarefas
 
-![Badge Angular](https://img.shields.io/badge/Frontend-Angular-dd0031?style=for-the-badge&logo=angular)
-![Badge NestJS](https://img.shields.io/badge/Backend-NestJS-E0234E?style=for-the-badge&logo=nestjs)
-![Badge TypeScript](https://img.shields.io/badge/Language-TypeScript-blue?style=for-the-badge&logo=typescript)
+> Um sistema de gerenciamento de tarefas estilo Kanban desenvolvido para organização de fluxo de trabalho.
 
-> Uma aplicação web interativa para gerenciamento de tarefas (Kanban), desenvolvida com foco em arquitetura limpa, escalabilidade e boas práticas de desenvolvimento.
+## 📺 Demonstração
 
----
+Confira o funcionamento do projeto e suas funcionalidades no vídeo abaixo:
 
-## 🖼️ Preview do Projeto
-
-![Dashboard do Kanban](./assets/preview.png)
-
-*Interface responsiva permitindo a visualização e movimentação de tarefas entre colunas.*
+[**🎥 Assista à Demonstração no Loom**](https://www.loom.com/share/81375f4716474f1b9480f4cc9210b698)
 
 ---
 
-## 🚀 Sobre o Projeto
+## 🚀 Tecnologias Utilizadas
 
-Este projeto foi desenvolvido como parte de um desafio técnico para demonstrar competências em desenvolvimento **Fullstack**. O objetivo foi criar um quadro Kanban onde o usuário pode criar, editar, excluir e mover tarefas entre colunas ("A Fazer", "Em Progresso", "Concluído").
+O projeto foi desenvolvido utilizando as seguintes tecnologias:
 
-### ✨ Funcionalidades Principais
-- **CRUD Completo:** Criação, Leitura, Atualização e Exclusão de tarefas.
-- **Drag & Drop:** Interface intuitiva para arrastar tarefas entre colunas.
-- **Persistência de Dados:** API robusta em NestJS para salvar o estado das tarefas.
-- **Validação de Dados:** Utilização de DTOs e Pipes no Backend.
-- **Interface Responsiva:** Layout adaptável desenvolvido com Angular.
+* **Front-end:** Angular
+* **Back-end:** Node.js
+* **Outras:** (Liste aqui se usou TypeScript, HTML/CSS, etc.)
 
----
+## ⚙️ Funcionalidades
 
-## 🛠️ Tecnologias Utilizadas
+* Criação de novas tarefas.
+* Movimentação de tarefas entre colunas (ex: A Fazer, Em Progresso, Concluído).
+* Edição e exclusão de cards.
+* Interface intuitiva e responsiva.
 
-### Frontend (Client)
-- **Angular 16+**: Estrutura baseada em componentes.
-- **Angular CDK (Drag and Drop)**: Para a funcionalidade de arrastar cards.
-- **RxJS**: Gerenciamento de estado reativo.
-- **CSS3/SCSS**: Estilização modular.
+## 🚧 Desafios e Aprendizados
 
-### Backend (Server)
-- **NestJS**: Framework progressivo para Node.js.
-- **TypeScript**: Tipagem estática para maior segurança.
-- **In-Memory/Database**: Armazenamento e persistência dos cards.
+Durante o desenvolvimento deste projeto, enfrentei e superei diversos desafios técnicos, desde a arquitetura até a implementação de funcionalidades específicas.
+
+📄 **[Clique aqui para ler a lista completa de desafios e soluções deste projeto](./DESAFIOS.md)**
+*(Obs: Se você optar por postar no LinkedIn ou Notion, substitua o `./DESAFIOS.md` pelo link do seu post)*
 
 ---
 
-## 📦 Como Rodar o Projeto
-
-Siga os passos abaixo para executar a aplicação em seu ambiente local.
+## 📦 Como rodar o projeto
 
 ### Pré-requisitos
-Certifique-se de ter o **Node.js** e o **Git** instalados em sua máquina.
+* Node.js instalado
+* Angular CLI
 
-### 1. Clonar o repositório
+### Instalação
+
+1. Clone o repositório:
 ```bash
 git clone [https://github.com/Taino-Edu/kanban-finalizado.git](https://github.com/Taino-Edu/kanban-finalizado.git)
-cd kanban-finalizado
-2. Configurar e Rodar o Backend (API)
-Abra um terminal, navegue até a pasta do servidor e instale as dependências:
-
-Bash
-
-cd backend
-npm install
-Inicie o servidor:
-
-Bash
-
-npm run start:dev
-O backend estará rodando em: http://localhost:3000
-
-3. Configurar e Rodar o Frontend (Interface)
-Abra um novo terminal, navegue até a pasta do cliente e instale as dependências:
-
-Bash
-
-cd frontend
-npm install
-Inicie a aplicação Angular:
-
-Bash
-
-ng serve
-Acesse a aplicação no navegador em: http://localhost:4200
-
-🧩 Estrutura e Arquitetura
-O projeto segue uma arquitetura modular para facilitar a manutenção e testes.
-
-Backend: Organizado em Modules, Controllers e Services (Padrão NestJS), garantindo injeção de dependência e separação de responsabilidades.
-
-Frontend: Componentes isolados para o Quadro (Board) e Cartões (Card), facilitando o reuso de código.
-
-🎥 Vídeo de Apresentação
-Confira uma breve demonstração do sistema funcionando e uma explicação sobre as decisões técnicas tomadas:
-
-▶️ Clique aqui para assistir ao vídeo de apresentação
-https://www.loom.com/share/81375f4716474f1b9480f4cc9210b698
-
-👨‍💻 Autor
-Desenvolvido por Eduardo Taino
