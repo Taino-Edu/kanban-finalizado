@@ -73,30 +73,33 @@ O projeto segue uma arquitetura modular para facilitar a manutenção e testes.
 Siga os passos abaixo para executar a aplicação em seu ambiente local.
 
 ### Pré-requisitos
-Certifique-se de ter o **Node.js** e o **Git** instalados em sua máquina.
+  ter o **Node.js** e o **Git** instalados em sua máquina.
 
-### 1. Clonar o repositório
-
-git clone [https://github.com/Taino-Edu/kanban-finalizado.git](https://github.com/Taino-Edu/kanban-finalizado.git)
+### 1. Clonar
+clone o repositório com git clone [https://github.com/Taino-Edu/kanban-finalizado.git](https://github.com/Taino-Edu/kanban-finalizado.git)
 cd kanban-finalizado
+
 2. Configurar e Rodar o Backend (API)
 Abra um terminal e navegue até a pasta do servidor:
 
-Bash
+
 
 cd backend
 npm install
 npm run start:dev
+
 🚀 O backend estará rodando em: http://localhost:3000
 
 3. Configurar e Rodar o Frontend (Interface)
+
 Abra um novo terminal e navegue até a pasta do cliente:
 
-Bash
+
 
 cd frontend
 npm install
 ng serve
+
 🎨 Acesse a aplicação no navegador em: http://localhost:4200
 
 
